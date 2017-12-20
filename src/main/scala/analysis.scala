@@ -24,7 +24,12 @@ case class OutputData(
   def outputS3Folder: StepName =>
   AnyData => (AnyData, S3Resource) =
     step => data =>
-      data -> baseFolder / analysisID / step / s"${analysisID}_${data.label}"
+      (
+        data,
+        S3Resource(
+          baseFolder / analysisID / step / s"${analysisID}_${data.label}"
+        )
+      )
 }
 
 case class Analysis(input: InputData, output: OutputData) {
@@ -41,7 +46,7 @@ case class Analysis(input: InputData, output: OutputData) {
   // this is the one and only method you need from here
   // the output is a list of (outputname, s3address)
   def runAnalysis: Email =>
-  Seq[(AnyData, S3Resource)] =
+  Map[AnyData, S3Resource] =
     email => {
 
       import impl._
@@ -58,7 +63,7 @@ case class Analysis(input: InputData, output: OutputData) {
           monitoringInterval = 10.minute
         )
 
-      Seq(remoteOutput(output))
+      remoteOutput(output)
     }
 
   // there be dragons
@@ -94,9 +99,8 @@ case class Analysis(input: InputData, output: OutputData) {
     }
 
     def dataMapping: InputData => OutputData => DataMapping[AnalysisBundle] =
-      {
-        input =>
-        DataMapping(experimentID.value, allInOne.dataProcessing)(
+      input => output =>
+        DataMapping(output.analysisID, allInOne.dataProcessing)(
           remoteInput =
             Map(
               demultiplexed.r1 -> input.r1,
@@ -105,7 +109,6 @@ case class Analysis(input: InputData, output: OutputData) {
           ,
           remoteOutput = remoteOutput(output)  // TODO
         )
-      }
 
     def managerBundle: List[DataMapping[AnalysisBundle]] => AnyManagerBundle =
       dms =>
