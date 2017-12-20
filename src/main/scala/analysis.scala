@@ -30,9 +30,20 @@ case class OutputData(
           baseFolder / analysisID / step / s"${analysisID}_${data.label}"
         )
       )
+
+  def remoteOutput : () => Map[AnyData, S3Resource] =
+    () =>
+      umiAnalysis.outputData
+        .keys.types.asList
+          .map( outputS3Folder("umi-Analysis") )
+          .toMap ++
+      igblastAnnotation.outputData
+        .keys.types.asList
+        .map( outputS3Folder("annotation") )
+          .toMap
 }
 
-case class Analysis(input: InputData, output: OutputData) {
+case object analysis {
 
   lazy val S3 =
     s3.defaultClient
@@ -45,9 +56,9 @@ case class Analysis(input: InputData, output: OutputData) {
 
   // this is the one and only method you need from here
   // the output is a list of (outputname, s3address)
-  def runAnalysis: Email =>
+  def runAnalysis: InputData => OutputData => Email =>
   Map[AnyData, S3Resource] =
-    email => {
+    input => output => email => {
 
       import impl._
 
@@ -63,7 +74,7 @@ case class Analysis(input: InputData, output: OutputData) {
           monitoringInterval = 10.minute
         )
 
-      remoteOutput(output)
+      output.remoteOutput()
     }
 
   // there be dragons
@@ -85,19 +96,6 @@ case class Analysis(input: InputData, output: OutputData) {
     def analysisBundle: AnalysisBundle =
       allInOne.dataProcessing
 
-    def remoteOutput : OutputData =>
-    Map[AnyData, S3Resource] = {
-      output =>
-        umiAnalysis.outputData
-          .keys.types.asList
-            .map( output.outputS3Folder("umi-Analysis") )
-            .toMap ++
-        igblastAnnotation.outputData
-          .keys.types.asList
-          .map( output.outputS3Folder("annotation") )
-            .toMap
-    }
-
     def dataMapping: InputData => OutputData => DataMapping[AnalysisBundle] =
       input => output =>
         DataMapping(output.analysisID, allInOne.dataProcessing)(
@@ -107,7 +105,7 @@ case class Analysis(input: InputData, output: OutputData) {
               demultiplexed.r2 -> input.r2
             )
           ,
-          remoteOutput = remoteOutput(output)  // TODO
+          remoteOutput = output.remoteOutput()  // TODO
         )
 
     def managerBundle: List[DataMapping[AnalysisBundle]] => AnyManagerBundle =
@@ -115,11 +113,12 @@ case class Analysis(input: InputData, output: OutputData) {
         new ManagerBundle(worker)(dms) {
 
           lazy val fullName: String =
-            "asdfjkl.Analysis.impl"
+            "asdfjkl.analysis.impl"
         }
 
     def defaultAMI =
       AmazonLinuxAMI(Ireland, HVM, InstanceStore)
+
     // TODO do I need a Manager config (??)
     object DefaultManagerConfig
       extends ManagerConfig(
@@ -167,7 +166,7 @@ case class Analysis(input: InputData, output: OutputData) {
     val defaultConfig =
       AnalysisConfig(
         loquatName    = "data-analysis",
-        logsS3Prefix  = output.baseFolder/output.analysisID/"analysis"/"log"/,
+        logsS3Prefix  = S3Folder("miodx", "clonomap")/"analysis"/"log"/,
         managerConfig = DefaultManagerConfig
       )
 
@@ -178,13 +177,13 @@ case class Analysis(input: InputData, output: OutputData) {
       defaultConfig
     )
 
-    case object workerCompat extends CompatibleWithPrefix("asdfjkl.Analysis.impl")(
+    case object workerCompat extends CompatibleWithPrefix("asdfjkl.analysis.impl")(
       environment = defaultConfig.amiEnv,
       bundle      = worker,
       metadata    = defaultConfig.metadata
     ) {
       override lazy val fullName: String =
-        "asdfjkl.Analysis.impl.workerCompat"
+        "asdfjkl.analysis.impl.workerCompat"
     }
     //////////////////////////////////////////////////////////////////////////////
 
