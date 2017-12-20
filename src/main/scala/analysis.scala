@@ -113,7 +113,7 @@ case object analysis {
         new ManagerBundle(worker)(dms) {
 
           lazy val fullName: String =
-            "asdfjkl.analysis.impl"
+            "era7bio.asdfjkl.analysis.impl"
         }
 
     def defaultAMI =
@@ -177,13 +177,13 @@ case object analysis {
       defaultConfig
     )
 
-    case object workerCompat extends CompatibleWithPrefix("asdfjkl.analysis.impl")(
+    case object workerCompat extends CompatibleWithPrefix("era7bio.asdfjkl.analysis.impl")(
       environment = defaultConfig.amiEnv,
       bundle      = worker,
       metadata    = defaultConfig.metadata
     ) {
       override lazy val fullName: String =
-        "asdfjkl.analysis.impl.workerCompat"
+        "era7bio.asdfjkl.analysis.impl.workerCompat"
     }
     //////////////////////////////////////////////////////////////////////////////
 
