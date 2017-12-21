@@ -13,8 +13,8 @@ import scala.util.Try
 import java.net.URL
 
 case class InputData(
-  r1 : S3Resource,
-  r2 : S3Resource
+  r1 : S3Object,
+  r2 : S3Object
 )
 
 case class OutputData(
@@ -22,16 +22,14 @@ case class OutputData(
   analysisID : ID
 ) {
   def outputS3Folder: StepName =>
-  AnyData => (AnyData, S3Resource) =
+  AnyData => (AnyData, S3Object) =
     step => data =>
       (
         data,
-        S3Resource(
-          baseFolder / analysisID / step / s"${analysisID}_${data.label}"
-        )
+        baseFolder / analysisID / step / s"${analysisID}_${data.label}"
       )
 
-  def remoteOutput : () => Map[AnyData, S3Resource] =
+  def remoteOutput : () => Map[AnyData, S3Object] =
     () =>
       umiAnalysis.outputData
         .keys.types.asList
@@ -57,7 +55,7 @@ case object analysis {
   // this is the one and only method you need from here
   // the output is a list of (outputname, s3address)
   def runAnalysis: InputData => OutputData => Email =>
-  Map[AnyData, S3Resource] =
+  Map[AnyData, S3Object] =
     input => output => email => {
 
       import impl._
@@ -101,11 +99,13 @@ case object analysis {
         DataMapping(output.analysisID, allInOne.dataProcessing)(
           remoteInput =
             Map(
-              demultiplexed.r1 -> input.r1,
-              demultiplexed.r2 -> input.r2
+              data.r1 -> MessageResource(input.r1.toString),
+              data.r2 -> MessageResource(input.r2.toString)
             )
           ,
-          remoteOutput = output.remoteOutput()  // TODO
+          remoteOutput = output.remoteOutput().map {
+            case (d, o) => (d, S3Resource(o))
+          }
         )
 
     def managerBundle: List[DataMapping[AnalysisBundle]] => AnyManagerBundle =

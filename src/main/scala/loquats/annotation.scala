@@ -60,7 +60,7 @@ case object igblastAnnotation {
       say("Human TCR beta annotation")
 
     case class Outs(prefix: File) {
-      def apply(d: FileData): File = new File(prefix, d.label)
+      def apply(d: Data): File = new File(prefix, d.label)
     }
 
     def processImpl(consensusFile: File, output: Outs): AnyInstructions { type Out <: OutputFiles } = {
