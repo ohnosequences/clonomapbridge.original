@@ -2,6 +2,9 @@ package era7bio.asdfjkl.loquats
 
 import era7bio.asdfjkl._, data._, loquats._
 import era7bio.repseqmiodx._, umi._, io._
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.transfer._
+import ohnosequences.awstools._, s3._
 import ohnosequences.cosas._, types._, records._, klists._
 import ohnosequences.loquat._, utils.files._
 import ohnosequences.statika._
@@ -48,9 +51,29 @@ case object allInOne {
 
     def instructions: AnyInstructions = say("Running UMI analysis and annotation")
 
+
+    def readFile: File => String =
+      file =>
+        new String( java.nio.file.Files readAllBytes file.toPath )
+
+
     def process(context: ProcessingContext[Input]): AnyInstructions { type Out <: OutputFiles } = {
-      lazy val r1 = context.inputFile(data.demultiplexed.r1)
-      lazy val r2 = context.inputFile(data.demultiplexed.r2)
+      lazy val r1URI : S3Object =
+        S3Object(new java.net.URI(readFile( context inputFile data.r1 )))
+      lazy val r2URI : S3Object =
+        S3Object(new java.net.URI(readFile( context inputFile data.r2 )))
+
+      val r1File : File = File.createTempFile("r1", "fastq.gz");
+      val r2File : File = File.createTempFile("r2", "fastq.gz");
+
+      val tm  = TransferManagerBuilder.standard()
+        .withS3Client(s3.defaultClient.asJava)
+        .build()
+
+      val r1Download = tm.download(r1URI, r1File)
+      val r2Download = tm.download(r2URI, r2File)
+
+      // FIXME: Check the downloads were successful
 
       val outputDir: File = context / "output"
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
@@ -58,7 +81,7 @@ case object allInOne {
       val umiOuts = umiAnalysis.dataProcessing.Outs(outputDir)
       val annOuts = igblastAnnotation.TRB.Outs(outputDir)
 
-      umiAnalysis.dataProcessing.processImpl(r1, r2, umiOuts) -&-
+      umiAnalysis.dataProcessing.processImpl(r1File, r2File, umiOuts) -&-
       igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, annOuts) -&-
       success("All outputs together",
         // UMI analysis out:

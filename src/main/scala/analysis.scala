@@ -13,8 +13,8 @@ import scala.util.Try
 import java.net.URL
 
 case class InputData(
-  r1 : S3Resource,
-  r2 : S3Resource
+  r1 : S3Object,
+  r2 : S3Object
 )
 
 case class OutputData(
@@ -101,11 +101,11 @@ case object analysis {
         DataMapping(output.analysisID, allInOne.dataProcessing)(
           remoteInput =
             Map(
-              demultiplexed.r1 -> input.r1,
-              demultiplexed.r2 -> input.r2
+              data.r1 -> MessageResource(input.r1.toString),
+              data.r2 -> MessageResource(input.r2.toString)
             )
           ,
-          remoteOutput = output.remoteOutput()  // TODO
+          remoteOutput = output.remoteOutput()
         )
 
     def managerBundle: List[DataMapping[AnalysisBundle]] => AnyManagerBundle =

@@ -13,7 +13,9 @@ case object data {
   /* ## 1. Raw reads QA, trimming and filtering */
 
   /* ### Input reads */
-  case object demultiplexed extends R1R2("demultiplexed")("fastq.gz")
+  // case object demultiplexed extends R1R2("demultiplexed")("fastq.gz")
+  case object r1 extends Data("r1")
+  case object r2 extends Data("r2")
 
   /* ### Output */
 

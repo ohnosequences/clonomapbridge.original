@@ -49,8 +49,8 @@ trait AnyPipeline { pipeline =>
   lazy val umiAnalysisDataMappings: DataMappings[umiAnalysis.dataProcessing.type] = inputPairedReads.toList.map { case (sampleId, (r1, r2)) =>
     DataMapping(sampleId, umiAnalysis.dataProcessing)(
       remoteInput = Map(
-        demultiplexed.r1 -> r1,
-        demultiplexed.r2 -> r2
+        data.r1 -> r1,
+        data.r2 -> r2
       ),
       remoteOutput = umiAnalysis.outputData
         .keys.types.asList
@@ -73,8 +73,8 @@ trait AnyPipeline { pipeline =>
   lazy val allInOneDataMappings: DataMappings[allInOne.dataProcessing.type] = inputPairedReads.toList.map { case (sampleId, (r1, r2)) =>
     DataMapping(sampleId, allInOne.dataProcessing)(
       remoteInput = Map(
-        demultiplexed.r1 -> r1,
-        demultiplexed.r2 -> r2
+        data.r1 -> r1,
+        data.r2 -> r2
       ),
       remoteOutput =
         umiAnalysis.outputData

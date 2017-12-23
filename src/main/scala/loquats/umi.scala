@@ -23,8 +23,8 @@ Datasets are mixed in both R1 and R2 fastq files. We need to identify them based
 case object umiAnalysis {
 
   case object inputData extends DataSet(
-    data.demultiplexed.r1 :×:
-    data.demultiplexed.r2 :×:
+    data.r1 :×:
+    data.r2 :×:
     |[AnyData]
   )
 
@@ -88,8 +88,8 @@ case object umiAnalysis {
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
 
       processImpl(
-        context.inputFile(data.demultiplexed.r1),
-        context.inputFile(data.demultiplexed.r2),
+        context.inputFile(data.r1),
+        context.inputFile(data.r2),
         Outs(outputDir)
       )
     }
