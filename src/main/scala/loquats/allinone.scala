@@ -63,8 +63,8 @@ case object allInOne {
       lazy val r2URI : S3Object =
         S3Object(new java.net.URI(readFile( context inputFile data.r2 )))
 
-      val r1File : File = File.createTempFile("r1", "fastq.gz");
-      val r2File : File = File.createTempFile("r2", "fastq.gz");
+      val r1File : File = File.createTempFile("read1", "fastq.gz");
+      val r2File : File = File.createTempFile("read2", "fastq.gz");
 
       val tm  = TransferManagerBuilder.standard()
         .withS3Client(s3.defaultClient.asJava)
