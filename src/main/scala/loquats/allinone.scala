@@ -14,6 +14,7 @@ import ohnosequences.datasets._
 import scala.util.matching.Regex
 import java.nio.file.Files
 import java.io.File
+import com.typesafe.scalalogging.LazyLogging
 
 /*
 The input sequence data are two paired-end datasets. The standard notation is (R1, R2) for a dataset.
@@ -47,7 +48,7 @@ case object allInOne {
   case object dataProcessing extends DataProcessingBundle(
     umiAnalysis.dataProcessing.bundleDependencies ++
     igblastAnnotation.TRB.bundleDependencies : _*
-  )(umiAnalysis.inputData, outputData) {
+  )(umiAnalysis.inputData, outputData) with LazyLogging {
 
     def instructions: AnyInstructions = say("Running UMI analysis and annotation")
 
@@ -66,12 +67,21 @@ case object allInOne {
       val r1File : File = File.createTempFile("read1", "fastq.gz");
       val r2File : File = File.createTempFile("read2", "fastq.gz");
 
-      val tm  = TransferManagerBuilder.standard()
+      val tm = TransferManagerBuilder.standard()
         .withS3Client(s3.defaultClient.asJava)
         .build()
 
-      val r1Download = tm.download(r1URI, r1File)
-      val r2Download = tm.download(r2URI, r2File)
+      util.Try { tm.download(r1URI.bucket, r1URI.key, r1File).waitForCompletion() } match {
+        case scala.util.Success(file) => logger.info(s"Read 1 downloaded to $file")
+        case scala.util.Failure(err)  => logger.error(s"Error downloading read 1: $err")
+      }
+
+      util.Try { tm.download(r2URI.bucket, r2URI.key, r2File).waitForCompletion() } match {
+        case scala.util.Success(file) => logger.info(s"Read 2 downloaded to $file")
+        case scala.util.Failure(err)  => logger.error(s"Error downloading read 2: $err")
+      }
+
+      logger.info(s"Reads downloaded to $r1File and $r2File")
 
       // FIXME: Check the downloads were successful
 
