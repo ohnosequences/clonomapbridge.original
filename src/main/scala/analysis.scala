@@ -35,7 +35,7 @@ case class OutputData(
     () =>
       umiAnalysis.outputData
         .keys.types.asList
-          .map( outputS3Folder("umi-Analysis") )
+          .map( outputS3Folder("umi-analysis") )
           .toMap ++
       igblastAnnotation.outputData
         .keys.types.asList
