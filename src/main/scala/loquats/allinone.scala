@@ -64,29 +64,33 @@ case object allInOne {
       lazy val r2URI : S3Object =
         S3Object(new java.net.URI(readFile( context inputFile data.r2 )))
 
-      val r1File : File = File.createTempFile("read1", "fastq.gz");
-      val r2File : File = File.createTempFile("read2", "fastq.gz");
+      val outputDir: File = context / "output"
+      if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
+
+      val r1File : File = outputDir / "read1.fastq.gz";
+      val r2File : File = outputDir / "read2.fastq.gz";
 
       val tm = TransferManagerBuilder.standard()
         .withS3Client(s3.defaultClient.asJava)
         .build()
 
-      util.Try { tm.download(r1URI.bucket, r1URI.key, r1File).waitForCompletion() } match {
-        case scala.util.Success(file) => logger.info(s"Read 1 downloaded to $file")
-        case scala.util.Failure(err)  => logger.error(s"Error downloading read 1: $err")
+      util.Try {
+        tm.download(r1URI.bucket, r1URI.key, r1File).waitForCompletion()
+      } match {
+        case scala.util.Success(_) =>
+          logger.info(s"Read 1 downloaded to $r1File")
+        case scala.util.Failure(e) =>
+          logger.error(s"Error downloading read 1: $e")
       }
 
-      util.Try { tm.download(r2URI.bucket, r2URI.key, r2File).waitForCompletion() } match {
-        case scala.util.Success(file) => logger.info(s"Read 2 downloaded to $file")
-        case scala.util.Failure(err)  => logger.error(s"Error downloading read 2: $err")
+      util.Try {
+        tm.download(r2URI.bucket, r2URI.key, r2File).waitForCompletion()
+      } match {
+        case scala.util.Success(_) =>
+          logger.info(s"Read 2 downloaded to $r2File")
+        case scala.util.Failure(e) =>
+          logger.error(s"Error downloading read 2: $e")
       }
-
-      logger.info(s"Reads downloaded to $r1File and $r2File")
-
-      // FIXME: Check the downloads were successful
-
-      val outputDir: File = context / "output"
-      if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
 
       val umiOuts = umiAnalysis.dataProcessing.Outs(outputDir)
       val annOuts = igblastAnnotation.TRB.Outs(outputDir)
