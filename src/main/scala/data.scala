@@ -123,6 +123,18 @@ case object data {
     // **: This is an extended version of the clonotype table (output **6.4**) which also contains the counts and frequency of each clonotype. It is a TSV table with the following structure:
     case object countsTable extends FileData("clonotype_counts")("tsv")
   }
+
+  /* ## 8. Phylogenetic tree */
+
+  /* ### Input
+
+     - IgBLAST Productive Clonotypes TSV (output **6.2.3**)
+  */
+
+  /* ### Output */
+  case object phylogeneticTree extends FileData("phylogenetic_tree")("png")
+
+
   //
   // TODO: the rest of the steps are not defined yet
   //
