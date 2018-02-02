@@ -15,24 +15,24 @@ import java.io.File
 import era7bio.db.tcr.GeneType
 import sys.process._
 
-/** == Phylogenetic Tree Loquat ==
+/** == Visualizations Loquat ==
 
 */
-case object phylogeneticTree {
+case object visualizations {
 
   case object inputData extends DataSet(
     data.clonotype.igblastProductiveTSV :×:
     |[AnyData]
   )
 
-  /** == Phylogenetic Tree output ==
+  /** == Visualizations output ==
 
     We have
 
-    - [[data.phylogeneticTree]] : A PNG with the tree plot.
+    - [[data.viz.phylogeneticTree]] : A PNG with the tree plot.
   */
   case object outputData extends DataSet(
-    data.phylogeneticTree :×:
+    data.viz.phylogeneticTree :×:
     |[AnyData]
   )
 
@@ -57,11 +57,11 @@ case object phylogeneticTree {
       LazyTry {
         repseqmiodx.phylogeneticTree.generate(
           productiveClonotypesTSV,
-          output(data.phylogeneticTree)
+          output(data.viz.phylogeneticTree)
         )
       } -&-
-      success("Phylogenetic tree created",
-        data.phylogeneticTree(output(data.phylogeneticTree)) ::
+      success("All visualizations created",
+        data.viz.phylogeneticTree(output(data.viz.phylogeneticTree)) ::
         *[AnyDenotation { type Value <: FileResource }]
       )
     }

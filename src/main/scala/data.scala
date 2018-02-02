@@ -124,7 +124,7 @@ case object data {
     case object countsTable extends FileData("clonotype_counts")("tsv")
   }
 
-  /* ## 8. Phylogenetic tree */
+  /* ## 8. Visualizations */
 
   /* ### Input
 
@@ -132,7 +132,10 @@ case object data {
   */
 
   /* ### Output */
-  case object phylogeneticTree extends FileData("phylogenetic_tree")("png")
+  case object viz {
+    /* - **8.1** Phylogenetic tree */
+    case object phylogeneticTree extends FileData("phylogenetic_tree")("png")
+  }
 
 
   //

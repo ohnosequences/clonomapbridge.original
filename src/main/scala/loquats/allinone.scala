@@ -42,7 +42,7 @@ case object allInOne {
     data.clonotype.igblastProductiveTSV  :×:
     data.clonotype.igblastProductiveJSON :×:
     // phylogenetic tree step:
-    data.phylogeneticTree :×:
+    data.viz.phylogeneticTree :×:
     |[AnyData]
   )
 
@@ -95,11 +95,11 @@ case object allInOne {
 
       val umiOuts = umiAnalysis.dataProcessing.Outs(outputDir)
       val annOuts = igblastAnnotation.TRB.Outs(outputDir)
-      val phyOuts = phylogeneticTree.dataProcessing.Outs(outputDir)
+      val phyOuts = visualizations.dataProcessing.Outs(outputDir)
 
       umiAnalysis.dataProcessing.processImpl(r1File, r2File, umiOuts) -&-
       igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, annOuts) -&-
-      phylogeneticTree.dataProcessing.processImpl(
+      visualizations.dataProcessing.processImpl(
         annOuts(data.clonotype.igblastProductiveTSV),
         phyOuts
       ) -&-
@@ -117,8 +117,8 @@ case object allInOne {
         data.clonotype.igblastTSV(annOuts(data.clonotype.igblastTSV))                       ::
         data.clonotype.igblastProductiveTSV(annOuts(data.clonotype.igblastProductiveTSV))   ::
         data.clonotype.igblastProductiveJSON(annOuts(data.clonotype.igblastProductiveJSON)) ::
-        // Phylogenetic out:
-        data.phylogeneticTree(phyOuts(data.phylogeneticTree)) ::
+        // Visualizations out:
+        data.viz.phylogeneticTree(phyOuts(data.viz.phylogeneticTree)) ::
         //
         *[AnyDenotation { type Value <: FileResource }]
       )
