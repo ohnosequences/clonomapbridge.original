@@ -1,4 +1,4 @@
-package era7bio.repseqmiodx.bundles
+package era7bio.asdfjkl.bundles
 
 import ohnosequences.statika._
 
