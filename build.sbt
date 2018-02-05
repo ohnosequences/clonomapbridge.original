@@ -8,13 +8,15 @@ bucketSuffix  := "era7.com"
 
 libraryDependencies ++= Seq(
   "era7bio"       %% "repseqmiodx" % "0.0.0-491-geb95537",
+  "org.ddahl"     %% "rscala"      % "2.2.2",
   "ohnosequences" %% "loquat"      % "2.0.0-RC4",
   "org.scalatest" %% "scalatest"   % "3.0.4" % Test
 )
 
 dependencyOverrides ++= Seq(
   "ohnosequences" %% "aws-scala-tools" % "0.19.0",
-  "ohnosequences" %% "cosas" % "0.10.0"
+  "ohnosequences" %% "cosas" % "0.10.0",
+  "org.scala-lang.modules" %% "scala-xml" % "1.0.5"
 )
 
 // Uncomment if you need to deploy this project as a Statika bundle:

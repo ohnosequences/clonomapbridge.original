@@ -14,6 +14,7 @@ import java.nio.file.Files
 import java.io.File
 import era7bio.db.tcr.GeneType
 import sys.process._
+import org.ddahl.rscala.RClient
 
 /** == Visualizations Loquat ==
 
@@ -55,14 +56,61 @@ case object visualizations {
     def processImpl(productiveClonotypesTSV: File, output: Outs)
     : AnyInstructions { type Out <: OutputFiles } = {
       LazyTry {
-        val treeCmdOutCode = repseqmiodx.phylogeneticTree.generate(
-          productiveClonotypesTSV,
-          output(data.viz.phylogeneticTree)
-        )
+        val client = RClient(serializeOutput = true)
+        val inputPath = productiveClonotypesTSV.getCanonicalPath()
+        val outputPath = output(data.viz.phylogeneticTree).getCanonicalPath()
+        client eval s"""
+          # Load needed libraries
+          library("msa")
+          library("ape")
+          library("seqinr")
 
-        if(treeCmdOutCode != 0)
-          sys.error(s"R script could not execute correctly: ${treeCmdOutCode}")
+          # Retrieve paths
+          inputFile  <- $inputPath
+          outputFile <- $outputPath
+          fastaFile  <- "aux.fasta"
 
+          # Generate a command to parse the TSV file and generate a FASTA
+          # ordered by the frequencies
+          command <- paste(
+            # Remove the header from the TSV
+            paste("tail -n +2 ", inputFile),
+            # Sort by frequency
+            "sort -t$$'\t' -k3 -nr",
+            # Keep the N first lines
+            "head -n50",
+            # Output the information as FASTA
+            "awk '{print ">"$$2"\n"$$5;}'",
+            sep=" | "
+          )
+
+          # Run the command and redirects the output to
+          system(
+            paste(
+              command,
+              fastaFile,
+              sep=" > "
+            )
+          )
+
+          # Align the CDR3 sequences
+          sequences <- readAAStringSet(fastaFile)
+          alignment <- msaMuscle(sequences)
+
+          # Convert the alignment to something seqinr understands
+          align.seq <- msaConvert(alignment, type="seqinr::alignment")
+
+          # Compute the alignment distances and generate the tree
+          tree      <- nj(dist.alignment(align.seq, "identity"))
+
+          # Plot the tree to the output file
+          png(filename=outputFile)
+          plot(tree)
+          dev.off()
+
+          # Remove auxiliary files
+          system(paste("rm ", fastaFile))
+        """
       } -&-
       success("All visualizations created",
         data.viz.phylogeneticTree(output(data.viz.phylogeneticTree)) ::
