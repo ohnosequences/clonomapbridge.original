@@ -16,12 +16,8 @@ case object r extends Bundle() {
       "/usr/lib/libquadmath.so"
     ) -&-
     cmd("R")("-e",
-      """install.packages(c("ape", "seqinr"), repos="https://cloud.r-project.org/")
-        |source("http://www.bioconductor.org/biocLite.R")
-        |biocLite("msa", suppressUpdates=TRUE)
-        |library("msa")
-        |library("ape")
-        |library("seqinr")
-        """
-    )
+      "install.packages(c('ape', 'seqinr'), repos='https://cloud.r-project.org/')"
+    ) -&-
+    cmd("R")("-e",
+      "source('http://www.bioconductor.org/biocLite.R'); biocLite('msa', suppressUpdates=TRUE)")
 }
