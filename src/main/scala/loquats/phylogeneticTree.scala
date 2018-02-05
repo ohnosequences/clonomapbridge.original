@@ -55,10 +55,14 @@ case object visualizations {
     def processImpl(productiveClonotypesTSV: File, output: Outs)
     : AnyInstructions { type Out <: OutputFiles } = {
       LazyTry {
-        repseqmiodx.phylogeneticTree.generate(
+        val treeCmdOutCode = repseqmiodx.phylogeneticTree.generate(
           productiveClonotypesTSV,
           output(data.viz.phylogeneticTree)
         )
+
+        if(treeCmdOutCode != 0)
+          sys.error(s"R script could not execute correctly: ${treeCmdOutCode}")
+
       } -&-
       success("All visualizations created",
         data.viz.phylogeneticTree(output(data.viz.phylogeneticTree)) ::
