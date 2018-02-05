@@ -48,7 +48,8 @@ case object allInOne {
 
   case object dataProcessing extends DataProcessingBundle(
     umiAnalysis.dataProcessing.bundleDependencies ++
-    igblastAnnotation.TRB.bundleDependencies : _*
+    igblastAnnotation.TRB.bundleDependencies      ++
+    visualizations.dataProcessing.bundleDependencies : _*
   )(umiAnalysis.inputData, outputData) with LazyLogging {
 
     def instructions: AnyInstructions = say("Running UMI analysis, annotation and phylogenetic tree creation")
