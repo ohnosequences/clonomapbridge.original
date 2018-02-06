@@ -40,6 +40,10 @@ case class OutputData(
       igblastAnnotation.outputData
         .keys.types.asList
         .map( outputS3Folder("annotation") )
+          .toMap ++
+      visualizations.outputData
+        .keys.types.asList
+        .map( outputS3Folder("visualizations") )
           .toMap
 }
 

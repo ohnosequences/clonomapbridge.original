@@ -41,16 +41,18 @@ case object allInOne {
     data.clonotype.igblastTSV            :×:
     data.clonotype.igblastProductiveTSV  :×:
     data.clonotype.igblastProductiveJSON :×:
-    //
+    // phylogenetic tree step:
+    data.viz.phylogeneticTree :×:
     |[AnyData]
   )
 
   case object dataProcessing extends DataProcessingBundle(
     umiAnalysis.dataProcessing.bundleDependencies ++
-    igblastAnnotation.TRB.bundleDependencies : _*
+    igblastAnnotation.TRB.bundleDependencies      ++
+    visualizations.dataProcessing.bundleDependencies : _*
   )(umiAnalysis.inputData, outputData) with LazyLogging {
 
-    def instructions: AnyInstructions = say("Running UMI analysis and annotation")
+    def instructions: AnyInstructions = say("Running UMI analysis, annotation and phylogenetic tree creation")
 
 
     def readFile: File => String =
@@ -94,9 +96,14 @@ case object allInOne {
 
       val umiOuts = umiAnalysis.dataProcessing.Outs(outputDir)
       val annOuts = igblastAnnotation.TRB.Outs(outputDir)
+      val phyOuts = visualizations.dataProcessing.Outs(outputDir)
 
       umiAnalysis.dataProcessing.processImpl(r1File, r2File, umiOuts) -&-
       igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, annOuts) -&-
+      visualizations.dataProcessing.processImpl(
+        annOuts(data.clonotype.igblastProductiveTSV),
+        phyOuts
+      ) -&-
       success("All outputs together",
         // UMI analysis out:
         data.mig.size.report(umiOuts.report)                        ::
@@ -111,6 +118,8 @@ case object allInOne {
         data.clonotype.igblastTSV(annOuts(data.clonotype.igblastTSV))                       ::
         data.clonotype.igblastProductiveTSV(annOuts(data.clonotype.igblastProductiveTSV))   ::
         data.clonotype.igblastProductiveJSON(annOuts(data.clonotype.igblastProductiveJSON)) ::
+        // Visualizations out:
+        data.viz.phylogeneticTree(phyOuts(data.viz.phylogeneticTree)) ::
         //
         *[AnyDenotation { type Value <: FileResource }]
       )
