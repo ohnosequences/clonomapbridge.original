@@ -66,8 +66,8 @@ case object visualizations {
           library("seqinr")
 
           # Retrieve paths
-          inputFile  <- $inputPath
-          outputFile <- $outputPath
+          inputFile  <- "$inputPath"
+          outputFile <- "$outputPath"
           fastaFile  <- "aux.fasta"
 
           # Generate a command to parse the TSV file and generate a FASTA
@@ -76,11 +76,11 @@ case object visualizations {
             # Remove the header from the TSV
             paste("tail -n +2 ", inputFile),
             # Sort by frequency
-            "sort -t$$'\t' -k3 -nr",
+            "sort -t$$'\\t' -k3 -nr",
             # Keep the N first lines
             "head -n50",
             # Output the information as FASTA
-            "awk '{print ">"$$2"\n"$$5;}'",
+            "awk '{print \\">\\"$$2\\"\\\\n\\"$$5;}'",
             sep=" | "
           )
 
