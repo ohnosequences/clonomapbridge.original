@@ -77,10 +77,12 @@ case object visualizations {
             paste("tail -n +2 ", inputFile),
             # Sort by frequency
             "sort -t$$'\\t' -k3 -nr",
-            # Keep the N first lines
-            "head -n50",
-            # Output the information as FASTA
-            "awk '{print \\">\\"$$2\\"\\\\n\\"$$5;}'",
+            # Keep the N first lines (otherwise it's too crowded)
+            "head -n25",
+            # Choosing only CDR3 sequence and AA-sequence columns
+            "cut -f 5,6",
+            # Output the information as FASTA with Amino-acid seq-s as headers
+            "awk '{print \\">\\"$$2\\"\\\\n\\"$$1;}'",
             sep=" | "
           )
 
