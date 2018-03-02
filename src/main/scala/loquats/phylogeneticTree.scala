@@ -59,7 +59,7 @@ case object visualizations {
         val client = RClient(serializeOutput = true)
         val inputPath = productiveClonotypesTSV.getCanonicalPath()
         val outputPath = output(data.viz.phylogeneticTree).getCanonicalPath()
-        client eval s"""
+        client eval raw"""
           # Load needed libraries
           library("msa")
           library("ape")
@@ -75,14 +75,11 @@ case object visualizations {
           command <- paste(
             # Remove the header from the TSV
             paste("tail -n +2 ", inputFile),
-            # Sort by frequency
-            "sort -t$$'\\t' -k3 -nr",
+            "sort -t$$'\t' -k3 -nr",
             # Keep the N first lines (otherwise it's too crowded)
             "head -n25",
-            # Choosing only CDR3 sequence and AA-sequence columns
-            "cut -f 5,6",
-            # Output the information as FASTA with Amino-acid seq-s as headers
-            "awk '{print \\">\\"$$2\\"\\\\n\\"$$1;}'",
+            # Output the information as FASTA with Amino-acid seq-s + rounded frequencies as headers
+            "awk -F'\t' '{ printf \">%s - %.2f\\n%s\\n\", $$6, $$4, $$5 }'",
             sep=" | "
           )
 
