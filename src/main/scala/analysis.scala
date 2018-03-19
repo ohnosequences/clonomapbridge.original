@@ -182,7 +182,7 @@ case object analysis {
 
     val defaultConfig =
       AnalysisConfig(
-        loquatName    = "data-analysis",
+        loquatName    = s"data-analysis-${System.currentTimeMillis.toString}",
         logsS3Prefix  = S3Folder("miodx", "clonomap")/"analysis"/"log"/,
         managerConfig = DefaultManagerConfig
       )
