@@ -165,6 +165,19 @@ case object analysis {
       override
       val sqsInitialTimeout =
         10.hours
+
+      override
+      val terminationConfig = TerminationConfig(
+        // if true loquat will terminate after solving all initial tasks
+        terminateAfterInitialDataMappings = true,
+        // if true loquat will terminate after errorQueue will contain more
+        // unique messages than threshold
+        errorsThreshold = Some(5),
+         // maximum time for processing one task
+        taskProcessingTimeout = None,
+        // maximum time for everything
+        globalTimeout = Some(6.hours)
+      )
     }
 
     val defaultConfig =
