@@ -69,15 +69,14 @@ case object analysis {
       val dms = List( (dataMapping(input)(output)) )
 
       val timestamp = System.currentTimeMillis.toString
-      val config = defaultConfig(timestamp)
 
       val fut =
         launcher.run(
-          config             = config                     ,
+          config             = defaultConfig(timestamp)   ,
           user               = loquatUser(email)          ,
           dataProcessing     = analysisBundle             ,
           dataMappings       = dms                        ,
-          manager            = managerBundle(dms)(config) ,
+          manager            = managerBundle(dms)(timestamp) ,
           monitoringInterval = 10.minute
         )
 
@@ -116,9 +115,9 @@ case object analysis {
         )
 
     def managerBundle
-    : List[DataMapping[AnalysisBundle]] => AnalysisConfig => AnyManagerBundle =
-      dms => config =>
-        new ManagerBundle(createWorker(config))(dms) {
+    : List[DataMapping[AnalysisBundle]] => String => AnyManagerBundle =
+      dms => timestamp =>
+        new ManagerBundle(createWorker(timestamp))(dms) {
 
           lazy val fullName: String =
             "era7bio.asdfjkl.analysis.impl"
@@ -193,11 +192,15 @@ case object analysis {
 
     // worker
     //////////////////////////////////////////////////////////////////////////////
-    def createWorker(config: AnalysisConfig) = {
+    def createWorker(timestamp: String) = {
       case object worker extends WorkerBundle(
         analysisBundle,
-        config
-      )
+        defaultConfig(timestamp)
+      ) {
+
+        lazy val fullName: String =
+          s"era7bio.asdfjkl.analysis.impl.createWorker(${timestamp})"
+      }
 
       worker
     }
