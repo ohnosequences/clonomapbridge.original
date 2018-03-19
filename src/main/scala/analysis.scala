@@ -68,13 +68,16 @@ case object analysis {
 
       val dms = List( (dataMapping(input)(output)) )
 
+      val timestamp = System.currentTimeMillis.toString
+      val config = defaultConfig(timestamp)
+
       val fut =
         launcher.run(
-          config             = defaultConfig       ,
-          user               = loquatUser(email)   ,
-          dataProcessing     = analysisBundle      ,
-          dataMappings       = dms                 ,
-          manager            = managerBundle(dms)  ,
+          config             = config                     ,
+          user               = loquatUser(email)          ,
+          dataProcessing     = analysisBundle             ,
+          dataMappings       = dms                        ,
+          manager            = managerBundle(dms)(config) ,
           monitoringInterval = 10.minute
         )
 
@@ -112,9 +115,10 @@ case object analysis {
           remoteOutput = output.remoteOutput()
         )
 
-    def managerBundle: List[DataMapping[AnalysisBundle]] => AnyManagerBundle =
-      dms =>
-        new ManagerBundle(worker)(dms) {
+    def managerBundle
+    : List[DataMapping[AnalysisBundle]] => AnalysisConfig => AnyManagerBundle =
+      dms => config =>
+        new ManagerBundle(createWorker(config))(dms) {
 
           lazy val fullName: String =
             "era7bio.asdfjkl.analysis.impl"
@@ -180,28 +184,24 @@ case object analysis {
       )
     }
 
-    val defaultConfig =
+    def defaultConfig(id: String) =
       AnalysisConfig(
-        loquatName    = s"data-analysis-${System.currentTimeMillis.toString}",
+        loquatName    = s"data-analysis-$id",
         logsS3Prefix  = S3Folder("miodx", "clonomap")/"analysis"/"log"/,
         managerConfig = DefaultManagerConfig
       )
 
     // worker
     //////////////////////////////////////////////////////////////////////////////
-    case object worker extends WorkerBundle(
-      analysisBundle,
-      defaultConfig
-    )
+    def createWorker(config: AnalysisConfig) = {
+      case object worker extends WorkerBundle(
+        analysisBundle,
+        config
+      )
 
-    case object workerCompat extends CompatibleWithPrefix("era7bio.asdfjkl.analysis.impl")(
-      environment = defaultConfig.amiEnv,
-      bundle      = worker,
-      metadata    = defaultConfig.metadata
-    ) {
-      override lazy val fullName: String =
-        "era7bio.asdfjkl.analysis.impl.workerCompat"
+      worker
     }
+
     //////////////////////////////////////////////////////////////////////////////
 
     def loquatUser: Email => LoquatUser =
