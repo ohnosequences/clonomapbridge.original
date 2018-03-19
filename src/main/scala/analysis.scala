@@ -176,7 +176,7 @@ case object analysis {
         terminateAfterInitialDataMappings = true,
         // if true loquat will terminate after errorQueue will contain more
         // unique messages than threshold
-        errorsThreshold = Some(5),
+        errorsThreshold = None,
          // maximum time for processing one task
         taskProcessingTimeout = None,
         // maximum time for everything
