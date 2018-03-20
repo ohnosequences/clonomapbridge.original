@@ -64,25 +64,52 @@ case object analysis {
   Map[AnyData, S3Resource] =
     input => output => email => {
 
-      import impl._
+      // Create a configuration adding a timestamp to the loquat name in order
+      // to create unique loquat names, which allows several instances of the
+      // same type to be launched at the same time.
+      val timestamp : Long = System.currentTimeMillis
+      val loquatConf = impl(timestamp)
 
-      val dms = List( (dataMapping(input)(output)) )
+      val dms = List( (loquatConf.dataMapping(input)(output)) )
 
       val fut =
         launcher.run(
-          config             = defaultConfig       ,
-          user               = loquatUser(email)   ,
-          dataProcessing     = analysisBundle      ,
-          dataMappings       = dms                 ,
-          manager            = managerBundle(dms)  ,
+          config             = loquatConf.defaultConfig      ,
+          user               = loquatConf.loquatUser(email)  ,
+          dataProcessing     = loquatConf.analysisBundle     ,
+          dataMappings       = dms                           ,
+          manager            = loquatConf.managerBundle(dms) ,
           monitoringInterval = 10.minute
         )
 
       output.remoteOutput()
     }
 
-  // there be dragons
-  case object impl {
+  // WARNING: The code inside this case class is hacky.
+  //
+  // The timestamp parameter is a suffix added to the loquat name: this allows
+  // several instances of the same type to be launched at the same time just by
+  // giving them different unique names.
+  //
+  // If you change either the name of this case class or the name *or type* of
+  // its parameter, you should also change the three `fullName` values you will
+  // find inside:
+  //   * the ManagerBundle object created from managerBundle method,
+  //   * the worker object,
+  //   * the workerCompat object.
+  // These `fullName` values contain references that you should take into
+  // account: the `impl` name, hardcoded inside the `fullName` string; the
+  // `timestamp` parameter, passed as a value to the interpolated `fullName`
+  // string; and the "L" after the "${timestamp}" substring, that is needed
+  // only because `timestamp` is a `Long`.
+  //
+  // The reason of this hack: Loquat (mainly Statika) was designed to treat the
+  // code as configuration, so any change to the configuration should be done
+  // through modifications in the code. We *do* need to change the name of the
+  // loquat in runtime (to be able to launch more than one instance at the same
+  // time), so we need this hacky hack in order to bypass the loquat
+  // expectations.
+  case class impl(val timestamp: Long) {
 
     type Namespace =
       String
@@ -112,12 +139,13 @@ case object analysis {
           remoteOutput = output.remoteOutput()
         )
 
-    def managerBundle: List[DataMapping[AnalysisBundle]] => AnyManagerBundle =
+    def managerBundle
+    : List[DataMapping[AnalysisBundle]] => AnyManagerBundle =
       dms =>
         new ManagerBundle(worker)(dms) {
-
+          override
           lazy val fullName: String =
-            "era7bio.asdfjkl.analysis.impl"
+            s"era7bio.asdfjkl.analysis.impl(${timestamp}L)"
         }
 
     def defaultAMI =
@@ -165,11 +193,24 @@ case object analysis {
       override
       val sqsInitialTimeout =
         10.hours
+
+      override
+      val terminationConfig = TerminationConfig(
+        // if true loquat will terminate after solving all initial tasks
+        terminateAfterInitialDataMappings = true,
+        // if true loquat will terminate after errorQueue will contain more
+        // unique messages than threshold
+        errorsThreshold = None,
+         // maximum time for processing one task
+        taskProcessingTimeout = None,
+        // maximum time for everything
+        globalTimeout = Some(6.hours)
+      )
     }
 
     val defaultConfig =
       AnalysisConfig(
-        loquatName    = "data-analysis",
+        loquatName    = s"data-analysis-$timestamp",
         logsS3Prefix  = S3Folder("miodx", "clonomap")/"analysis"/"log"/,
         managerConfig = DefaultManagerConfig
       )
@@ -179,7 +220,11 @@ case object analysis {
     case object worker extends WorkerBundle(
       analysisBundle,
       defaultConfig
-    )
+    ) {
+
+      lazy val fullName: String =
+        s"era7bio.asdfjkl.analysis.impl(${timestamp}L).worker"
+    }
 
     case object workerCompat extends CompatibleWithPrefix("era7bio.asdfjkl.analysis.impl")(
       environment = defaultConfig.amiEnv,
@@ -187,8 +232,9 @@ case object analysis {
       metadata    = defaultConfig.metadata
     ) {
       override lazy val fullName: String =
-        "era7bio.asdfjkl.analysis.impl.workerCompat"
+        s"era7bio.asdfjkl.analysis.impl(${timestamp}L).workerCompat"
     }
+
     //////////////////////////////////////////////////////////////////////////////
 
     def loquatUser: Email => LoquatUser =
