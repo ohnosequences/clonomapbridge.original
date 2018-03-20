@@ -64,19 +64,18 @@ case object analysis {
   Map[AnyData, S3Resource] =
     input => output => email => {
 
-      import impl._
+      val timestamp : Long = System.currentTimeMillis
+      val loquatConf = impl(timestamp)
 
-      val dms = List( (dataMapping(input)(output)) )
-
-      val timestamp = System.currentTimeMillis.toString
+      val dms = List( (loquatConf.dataMapping(input)(output)) )
 
       val fut =
         launcher.run(
-          config             = defaultConfig(timestamp)   ,
-          user               = loquatUser(email)          ,
-          dataProcessing     = analysisBundle             ,
-          dataMappings       = dms                        ,
-          manager            = managerBundle(dms)(timestamp) ,
+          config             = loquatConf.defaultConfig      ,
+          user               = loquatConf.loquatUser(email)  ,
+          dataProcessing     = loquatConf.analysisBundle     ,
+          dataMappings       = dms                           ,
+          manager            = loquatConf.managerBundle(dms) ,
           monitoringInterval = 10.minute
         )
 
@@ -84,7 +83,7 @@ case object analysis {
     }
 
   // there be dragons
-  case object impl {
+  case class impl(val timestamp: Long) {
 
     type Namespace =
       String
@@ -115,12 +114,12 @@ case object analysis {
         )
 
     def managerBundle
-    : List[DataMapping[AnalysisBundle]] => String => AnyManagerBundle =
-      dms => timestamp =>
-        new ManagerBundle(createWorker(timestamp))(dms) {
-
+    : List[DataMapping[AnalysisBundle]] => AnyManagerBundle =
+      dms =>
+        new ManagerBundle(worker)(dms) {
+          override
           lazy val fullName: String =
-            "era7bio.asdfjkl.analysis.impl"
+            s"era7bio.asdfjkl.analysis.impl(${timestamp}L)"
         }
 
     def defaultAMI =
@@ -183,26 +182,31 @@ case object analysis {
       )
     }
 
-    def defaultConfig(id: String) =
+    val defaultConfig =
       AnalysisConfig(
-        loquatName    = s"data-analysis-$id",
+        loquatName    = s"data-analysis-$timestamp",
         logsS3Prefix  = S3Folder("miodx", "clonomap")/"analysis"/"log"/,
         managerConfig = DefaultManagerConfig
       )
 
     // worker
     //////////////////////////////////////////////////////////////////////////////
-    def createWorker(timestamp: String) = {
-      case object worker extends WorkerBundle(
-        analysisBundle,
-        defaultConfig(timestamp)
-      ) {
+    case object worker extends WorkerBundle(
+      analysisBundle,
+      defaultConfig
+    ) {
 
-        lazy val fullName: String =
-          s"era7bio.asdfjkl.analysis.impl.createWorker(${timestamp})"
-      }
+      lazy val fullName: String =
+        s"era7bio.asdfjkl.analysis.impl(${timestamp}L).worker"
+    }
 
-      worker
+    case object workerCompat extends CompatibleWithPrefix("era7bio.asdfjkl.analysis.impl")(
+      environment = defaultConfig.amiEnv,
+      bundle      = worker,
+      metadata    = defaultConfig.metadata
+    ) {
+      override lazy val fullName: String =
+        s"era7bio.asdfjkl.analysis.impl(${timestamp}L).workerCompat"
     }
 
     //////////////////////////////////////////////////////////////////////////////
