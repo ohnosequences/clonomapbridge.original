@@ -64,6 +64,9 @@ case object analysis {
   Map[AnyData, S3Resource] =
     input => output => email => {
 
+      // Create a configuration adding a timestamp to the loquat name in order
+      // to create unique loquat names, which allows several instances of the
+      // same type to be launched at the same time.
       val timestamp : Long = System.currentTimeMillis
       val loquatConf = impl(timestamp)
 
@@ -82,7 +85,30 @@ case object analysis {
       output.remoteOutput()
     }
 
-  // there be dragons
+  // WARNING: The code inside this case class is hacky.
+  //
+  // The timestamp parameter is a suffix added to the loquat name: this allows
+  // several instances of the same type to be launched at the same time just by
+  // giving them different unique names.
+  //
+  // If you change either the name of this case class or the name *or type* of
+  // its parameter, you should also change the three `fullName` values you will
+  // find inside:
+  //   * the ManagerBundle object created from managerBundle method,
+  //   * the worker object,
+  //   * the workerCompat object.
+  // These `fullName` values contain references that you should take into
+  // account: the `impl` name, hardcoded inside the `fullName` string; the
+  // `timestamp` parameter, passed as a value to the interpolated `fullName`
+  // string; and the "L" after the "${timestamp}" substring, that is needed
+  // only because `timestamp` is a `Long`.
+  //
+  // The reason of this hack: Loquat (mainly Statika) was designed to treat the
+  // code as configuration, so any change to the configuration should be done
+  // through modifications in the code. We *do* need to change the name of the
+  // loquat in runtime (to be able to launch more than one instance at the same
+  // time), so we need this hacky hack in order to bypass the loquat
+  // expectations.
   case class impl(val timestamp: Long) {
 
     type Namespace =
