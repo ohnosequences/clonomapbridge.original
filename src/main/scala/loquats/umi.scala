@@ -50,6 +50,11 @@ case object umiAnalysis {
         (prefix / "consensus").createDirectory
       )
 
+      // One of these two files may not be created; we make sure they exist so
+      // Loquat does not complain about not found files.
+      consensus.pairs.joined.createNewFile()
+      consensus.pairs.empty.createNewFile()
+
       val report    = prefix / data.mig.size.report.label
       val histogram = prefix / data.mig.size.histogram.label
     }
