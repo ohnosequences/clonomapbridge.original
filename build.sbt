@@ -7,7 +7,7 @@ scalaVersion  := "2.11.8"
 bucketSuffix  := "era7.com"
 
 libraryDependencies ++= Seq(
-  "era7bio"       %% "repseqmiodx" % "0.0.0-485-gde78089",
+  "era7bio"       %% "repseqmiodx" % "0.0.0-492-g0267864",
   "org.ddahl"     %% "rscala"      % "2.2.2",
   "ohnosequences" %% "loquat"      % "2.0.0-RC4",
   "org.scalatest" %% "scalatest"   % "3.0.4" % Test
