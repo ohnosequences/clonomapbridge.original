@@ -69,9 +69,10 @@ case object umiAnalysis {
 
         val consensuses: Array[UMIConsensus] =
           ReadsProcessing.writeConsensuses(
-            format = DefaultFormats.typeA,
-            reads  = readPairs,
-            debug  = true
+            format         = DefaultFormats.typeA,
+            reads          = readPairs,
+            expectedLength = 330,
+            debug          = true
           )(output.consensus)
 
         val sizesMap = ReadsProcessing.clusterSizes(consensuses, Some(output.report))
