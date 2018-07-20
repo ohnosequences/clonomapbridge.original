@@ -4,4 +4,4 @@ resolvers ++= Seq(
   Resolver.jcenterRepo
 )
 
-addSbtPlugin("ohnosequences" % "nice-sbt-settings" % "0.9.0")
+addSbtPlugin("ohnosequences" % "nice-sbt-settings" % "0.10.0")
