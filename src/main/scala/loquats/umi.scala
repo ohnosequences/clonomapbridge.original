@@ -1,6 +1,6 @@
-package era7bio.asdfjkl.loquats
+package ohnosequences.clonomapbridge.loquats
 
-import era7bio.asdfjkl._, data._
+import ohnosequences.clonomapbridge._, data._
 import era7bio.repseqmiodx._, umi._, io._
 import ohnosequences.cosas._, types._, records._, klists._
 import ohnosequences.loquat._
@@ -22,12 +22,14 @@ Datasets are mixed in both R1 and R2 fastq files. We need to identify them based
 */
 case object umiAnalysis {
 
+  // Define the input data resources, which are the raw reads
   case object inputData extends DataSet(
     data.r1 :×:
     data.r2 :×:
     |[AnyData]
   )
 
+  // Define the output data resources
   case object outputData extends DataSet(
     data.mig.size.report        :×:
     data.mig.size.histogram     :×:
@@ -40,8 +42,12 @@ case object umiAnalysis {
 
   case object dataProcessing extends DataProcessingBundle()(inputData, outputData) {
 
+    /**
+     * Dummy instructions, all the fun happens in process and processImpl
+     */
     def instructions: AnyInstructions = say("Let the clustering begin")
 
+    // Define the output files, local to a base directory
     case class Outs(prefix: File) {
       import ohnosequences.loquat.utils.files._
 
@@ -59,14 +65,18 @@ case object umiAnalysis {
       val histogram = prefix / data.mig.size.histogram.label
     }
 
-    def processImpl(r1: File, r2: File, output: Outs): AnyInstructions { type Out <: OutputFiles } = {
+    def processImpl(r1: File, r2: File, output: Outs): AnyInstructions {
+      type Out <: OutputFiles
+    } = {
       LazyTry {
+        // Read the lines from the files and parse the reads from the lines
         val readPairs: Iterator[ReadPair] =
           parseFromFastqPhred33LinesDropErrors(
             r1.gzippedLines,
             r2.gzippedLines
           )
 
+        // Generate and write the consensuses
         val consensuses: Array[UMIConsensus] =
           ReadsProcessing.writeConsensuses(
             format         = DefaultFormats.typeA,
@@ -75,7 +85,11 @@ case object umiAnalysis {
             debug          = true
           )(output.consensus)
 
-        val sizesMap = ReadsProcessing.clusterSizes(consensuses, Some(output.report))
+        // Generate the sizes map
+        val sizesMap = ReadsProcessing.clusterSizes(
+          consensuses,
+          Some(output.report)
+        )
         ReadsProcessing.clusterSizesHistogram(sizesMap, Some(output.histogram))
       } -&-
       success("",
@@ -89,6 +103,9 @@ case object umiAnalysis {
       )
     }
 
+    /**
+     * Define the output files and call processImpl
+     */
     def process(context: ProcessingContext[Input]): AnyInstructions { type Out <: OutputFiles } = {
       val outputDir: File = context / "output"
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)

@@ -1,15 +1,29 @@
-package era7bio.asdfjkl
+package ohnosequences.clonomapbridge
 
 import ohnosequences.loquat._, utils._
-import era7bio.asdfjkl.loquats._
+import ohnosequences.clonomapbridge.loquats._
 import com.typesafe.scalalogging.LazyLogging
 import scala.util.{ Try, Failure }
 import scala.concurrent.duration._
 import java.util.concurrent.ScheduledFuture
 import java.nio.file.Files
 
+/**
+ * Launch the loquat
+ */
 case object launcher extends LazyLogging {
 
+  /**
+   * Run Loquat
+   *
+   * @param config is the Loquat config
+   * @param user is the Loquat user
+   * @param dataProcessing is the specification of how to process the data
+   * @param dataMappings are the maps between data and resources
+   * @param manager is the configuration of the manager
+   * @param monitoringInterval is interval in which the manager monitors
+   * everything
+   */
   def run(
     config: AnyLoquatConfig,
     user: LoquatUser,
@@ -22,8 +36,15 @@ case object launcher extends LazyLogging {
     // Manager bundle needs some local directory to run in
     val localTmpDir = Files.createTempDirectory(config.loquatName).toFile
 
+    // Run a first check of the configuration, user and data
     LoquatOps.check(config, user, dataProcessing, dataMappings) match {
-      case Left(msg) => Failure(new java.util.prefs.InvalidPreferencesFormatException(msg))
+      case Left(msg) =>
+        Failure(
+          new java.util.prefs.InvalidPreferencesFormatException(msg)
+        )
+
+      // If everything works as expected, we receive an instance of aws to
+      // execute the next steps
       case Right(aws) => {
         // executing a chain of steps that prepare AWS resources
         val resourcesPrepared: Try[_] =

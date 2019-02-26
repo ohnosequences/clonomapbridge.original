@@ -1,6 +1,6 @@
-package era7bio.asdfjkl.test
+package ohnosequences.clonomapbridge.test
 
-import era7bio.asdfjkl._
+import ohnosequences.clonomapbridge._
 import era7bio.repseqmiodx._
 import ohnosequences.loquat._
 import ohnosequences.statika._, aws._
@@ -9,7 +9,7 @@ import com.amazonaws.auth.profile._
 
 case object testDefaults {
 
-  lazy val metadata = era7bio.generated.metadata.asdfjkl
+  lazy val metadata = ohnosequences.generated.metadata.clonomapbridge
 
   /* Output test data is scoped by version */
   lazy val outputS3Prefix = s3"resources.ohnosequences.com" /

@@ -1,4 +1,4 @@
-package era7bio.asdfjkl
+package ohnosequences.clonomapbridge
 
 import ohnosequences.loquat._
 import ohnosequences.statika._, aws._
@@ -7,6 +7,9 @@ import ohnosequences.awstools._, ec2._, autoscaling._, regions._
 import ohnosequences.datasets._
 import scala.concurrent.duration._
 
+/**
+ * Common Loquat config for every step in the pipeline
+ */
 trait AnyStepConfig extends AnyLoquatConfig {
 
   val pipelineName: String
@@ -31,8 +34,18 @@ trait AnyStepConfig extends AnyLoquatConfig {
   )
 }
 
+/**
+ * A wrapper around AnyStepConfig with the step name as the only parameter of
+ * the constructor
+ */
 abstract class StepConfig(val stepName: String) extends AnyStepConfig
 
+/**
+ * Common configuration for the UMI analysis step
+ *
+ *   - Mahine: r3.2xlarge
+ *   - Price: Spot Instance, $0.2
+ */
 abstract class AnyUmiAnalysisConfig extends StepConfig("umi_analysis") {
 
   override lazy val amiEnv = amznAMIEnv(ami, javaHeap = 50, javaOptions = Seq("-XX:+UseG1GC"))
@@ -46,6 +59,12 @@ abstract class AnyUmiAnalysisConfig extends StepConfig("umi_analysis") {
   override val sqsInitialTimeout = 6.hours
 }
 
+/**
+ * Common configuration for the IgBLAST step
+ *
+ *   - Mahine: c3.large
+ *   - Price: Spot Instance, $0.04
+ */
 abstract class AnyAnnotationConfig extends StepConfig("igblast") {
 
   override lazy val amiEnv = amznAMIEnv(ami, javaHeap = 2)
@@ -58,6 +77,12 @@ abstract class AnyAnnotationConfig extends StepConfig("igblast") {
   )
 }
 
+/**
+ * Common configuration for the whole pipeline in a single step
+ *
+ *   - Mahine: r3.2xlarge
+ *   - Price: Spot Instance, $0.2
+ */
 abstract class AnyAllInOneConfig extends StepConfig("all_in_one") {
 
   override lazy val amiEnv = amznAMIEnv(ami, javaHeap = 50, javaOptions = Seq("-XX:+UseG1GC"))

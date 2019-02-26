@@ -1,4 +1,4 @@
-package era7bio.asdfjkl
+package ohnosequences.clonomapbridge
 
 import ohnosequences.datasets._
 import ohnosequences.cosas._, types._, klists._
@@ -30,8 +30,6 @@ case object data {
     case object   paired extends R1R2("trimmed_paired")("fastq.gz")
     case object unpaired extends R1R2("trimmed_unpaired")("fastq.gz")
   }
-  // TODO: a data for all trimmed reads per sample(/experiment?)
-
 
   /* ## 2. UMI clustering and MIGs size filtering */
 
@@ -58,11 +56,6 @@ case object data {
     // This will be generated from the output of clusters (one task for each cluster)
     case object cluster  extends R1R2("MIG")("fastq.gz")
   }
-
-
-  //
-  // TODO: ... filtering step?
-  //
 
 
   /* ## 5. MIGs assembly */
@@ -136,9 +129,4 @@ case object data {
     /* - **8.1** Phylogenetic tree */
     case object phylogeneticTree extends FileData("phylogenetic_tree")("png")
   }
-
-
-  //
-  // TODO: the rest of the steps are not defined yet
-  //
 }
