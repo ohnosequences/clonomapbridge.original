@@ -1,7 +1,7 @@
-package era7bio.asdfjkl
+package ohnosequences.clonomapbridge
 
 import era7bio.repseqmiodx._
-import era7bio.asdfjkl._, loquats._, data._
+import ohnosequences.clonomapbridge._, loquats._, data._
 import ohnosequences.loquat._
 import ohnosequences.datasets._
 import ohnosequences.statika._, aws._
@@ -12,15 +12,21 @@ import scala.concurrent.duration._
 import scala.util.Try
 import java.net.URL
 
+// Common case class for the input data
 case class InputData(
   r1 : S3Object,
   r2 : S3Object
 )
 
+// Common case class for the output data, which is parametrized by a base
+// directory and an analysis identifier (which comes from the webapp)
 case class OutputData(
   baseFolder : S3Folder,
   analysisID : ID
 ) {
+  /**
+   * Define the S3 directory where the output will be uploaded
+   */
   def outputS3Folder: StepName =>
   AnyData => (AnyData, S3Resource) =
     step => data =>
@@ -31,6 +37,9 @@ case class OutputData(
         )
       )
 
+  /**
+   * Map the output data with their corresponding S3 paths
+   */
   def remoteOutput : () => Map[AnyData, S3Resource] =
     () =>
       umiAnalysis.outputData
@@ -47,8 +56,13 @@ case class OutputData(
           .toMap
 }
 
+/**
+ * This is called from the web application, and it contains the implementation
+ * of all the loquat configuration and running
+ */
 case object analysis {
 
+  // S3 client for downloading/uloading files
   lazy val S3 =
     s3.defaultClient
 
@@ -58,8 +72,13 @@ case object analysis {
   type ID =
     String
 
-  // this is the one and only method you need from here
-  // the output is a list of (outputname, s3address)
+  /**
+   * This is the one and only method you need from here.
+   *
+   * It receives an InputData instance, an OutputData instance, an email that
+   * identifies the loquat user and the output is a list of (outputname,
+   * s3address)
+   */
   def runAnalysis: InputData => OutputData => Email =>
   Map[AnyData, S3Resource] =
     input => output => email => {
@@ -115,8 +134,7 @@ case object analysis {
       String
 
     def analysisJarMetadata =
-      era7bio.generated.metadata.asdfjkl
-    // TODO review this. I think this should be the project which contains the data processing bundle which you want to run (??)
+      ohnosequences.generated.metadata.clonomapbridge
 
     type AnalysisBundle =
       allInOne.dataProcessing.type
@@ -145,20 +163,19 @@ case object analysis {
         new ManagerBundle(worker)(dms) {
           override
           lazy val fullName: String =
-            s"era7bio.asdfjkl.analysis.impl(${timestamp}L)"
+            s"ohnosequences.clonomapbridge.analysis.impl(${timestamp}L)"
         }
 
     def defaultAMI =
       AmazonLinuxAMI(Ireland, HVM, InstanceStore)
 
-    // TODO do I need a Manager config (??)
     object DefaultManagerConfig
       extends ManagerConfig(
         defaultAMI,
         m3.medium,
         PurchaseModel.spot(0.1)
       )
-    // TODO review this conf
+
     case class AnalysisConfig(
       val loquatName    : String            ,
       val logsS3Prefix  : S3Folder          ,
@@ -185,7 +202,7 @@ case object analysis {
       lazy val workersConfig: AnyWorkersConfig =
         WorkersConfig(
           defaultAMI,
-          r3.`2xlarge`, // TODO should be i3.2xlarge
+          r3.`2xlarge`,
           PurchaseModel.spot(0.2),
           AutoScalingGroupSize(0, 1, 1)
         )
@@ -223,16 +240,16 @@ case object analysis {
     ) {
 
       lazy val fullName: String =
-        s"era7bio.asdfjkl.analysis.impl(${timestamp}L).worker"
+        s"ohnosequences.clonomapbridge.analysis.impl(${timestamp}L).worker"
     }
 
-    case object workerCompat extends CompatibleWithPrefix("era7bio.asdfjkl.analysis.impl")(
+    case object workerCompat extends CompatibleWithPrefix("ohnosequences.clonomapbridge.analysis.impl")(
       environment = defaultConfig.amiEnv,
       bundle      = worker,
       metadata    = defaultConfig.metadata
     ) {
       override lazy val fullName: String =
-        s"era7bio.asdfjkl.analysis.impl(${timestamp}L).workerCompat"
+        s"ohnosequences.clonomapbridge.analysis.impl(${timestamp}L).workerCompat"
     }
 
     //////////////////////////////////////////////////////////////////////////////

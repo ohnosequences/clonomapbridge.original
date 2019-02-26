@@ -1,7 +1,11 @@
-package era7bio.asdfjkl.bundles
+package ohnosequences.clonomapbridge.bundles
 
 import ohnosequences.statika._
 
+/**
+ * Bundle for downloading and installing R and the R libraries `ape` `seqinr`
+ * and `msa`
+ */
 case object r extends Bundle() {
 
   def instructions: AnyInstructions =

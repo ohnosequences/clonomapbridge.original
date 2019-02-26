@@ -1,6 +1,6 @@
-package era7bio.asdfjkl.loquats
+package ohnosequences.clonomapbridge.loquats
 
-import era7bio.asdfjkl._, data._
+import ohnosequences.clonomapbridge._, data._
 import era7bio.repseqmiodx, repseqmiodx._, umi._, io._, clonotypes._
 import ohnosequences.cosas._, types._, records._, klists._
 import ohnosequences.loquat._
@@ -21,6 +21,7 @@ import org.ddahl.rscala.RClient
 */
 case object visualizations {
 
+  // Define the input data resources: the output of IgBLAST
   case object inputData extends DataSet(
     data.clonotype.igblastProductiveTSV :×:
     |[AnyData]
@@ -37,7 +38,7 @@ case object visualizations {
     |[AnyData]
   )
 
-  /** == Human TCR β annotation loquat ==
+  /** == Visualization loquat ==
 
     This loquat aligns the CDR3 sequences with msa R package
     and plot a phylogenetic tree built with seqinr/ape R packages.
@@ -46,19 +47,37 @@ case object visualizations {
     bundles.r
   )(inputData, outputData) {
 
+    /**
+     * Dummy instructions, the fun happens in process and processImpl
+     */
     def instructions: AnyInstructions =
       say("Phylogenetic tree creation")
 
+    // Define the output files for this loquat
     case class Outs(prefix: File) {
       def apply(d: FileData): File = new File(prefix, d.label)
     }
 
+    /**
+     * Generate the R program for creating the phylogenetic tree and execute it
+     */
     def processImpl(productiveClonotypesTSV: File, output: Outs)
     : AnyInstructions { type Out <: OutputFiles } = {
       LazyTry {
+        // The R client, which will evaluate the R program
         val client = RClient(serializeOutput = true)
+
+        // The path where the input file is
         val inputPath = productiveClonotypesTSV.getCanonicalPath()
+
+        // The path where the output file is
         val outputPath = output(data.viz.phylogeneticTree).getCanonicalPath()
+
+        // Evaluate the R program. Please note that this is a raw interpolated
+        // string that is passed to the client. But inside it there are CLI
+        // commands written, one of them being awk, that itself receives a
+        // string with commands. So the depth of interpolation here is off the
+        // chart
         client eval raw"""
           # Load needed libraries
           library("msa")
@@ -117,7 +136,12 @@ case object visualizations {
       )
     }
 
-    def process(context: ProcessingContext[Input]): AnyInstructions { type Out <: OutputFiles } = {
+    /**
+     * Define the output directories and call processImpl
+     */
+    def process(context: ProcessingContext[Input]): AnyInstructions {
+      type Out <: OutputFiles
+    } = {
       val outputDir: File = context / "output"
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
 

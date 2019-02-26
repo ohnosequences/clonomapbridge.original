@@ -1,6 +1,6 @@
-name          := "asdfjkl"
-organization  := "era7bio"
-description   := "asdfjkl project"
+name          := "clonomapbridge"
+organization  := "ohnosequences"
+description   := "A bridge between MIODx webapp and MIODx analysis pipeline"
 
 scalaVersion  := "2.11.12"
 

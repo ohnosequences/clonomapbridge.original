@@ -1,6 +1,6 @@
-package era7bio.asdfjkl.loquats
+package ohnosequences.clonomapbridge.loquats
 
-import era7bio.asdfjkl._, data._
+import ohnosequences.clonomapbridge._, data._
 import era7bio.repseqmiodx._, umi._, io._, clonotypes._
 import ohnosequences.cosas._, types._, records._, klists._
 import ohnosequences.loquat._
@@ -20,6 +20,7 @@ import sys.process._
 */
 case object igblastAnnotation {
 
+  // The input is just the consensus fasta from the umi step
   case object inputData extends DataSet(
     data.consensus.fasta :×:
     |[AnyData]
@@ -56,17 +57,31 @@ case object igblastAnnotation {
     referenceDBs.human.TRB.aux
   )(inputData, outputData) {
 
+    /**
+     * Dummy instructions, the fun happens in processImpl
+     */
     def instructions: AnyInstructions =
       say("Human TCR beta annotation")
 
+    /**
+     * Create the output local files from a base directory
+     */
     case class Outs(prefix: File) {
       def apply(d: FileData): File = new File(prefix, d.label)
     }
 
-    def processImpl(consensusFile: File, output: Outs): AnyInstructions { type Out <: OutputFiles } = {
+    /**
+     * Implementation of the process itself. Loquat will call the process
+     * functions below
+     */
+    def processImpl(consensusFile: File, output: Outs): AnyInstructions {
+      type Out <: OutputFiles
+    } = {
       LazyTry {
+        // Define the output for IgBLAST
         val igblastnOut = output(data.clonotype.igblastOut)
 
+        // Define the IgBLAST command with the needed parameters
         val igblastnCmd = annotation.clonotypesCmd(
           queryFile = consensusFile,
           dbVFile = referenceDBs.human.TRB.V.name,
@@ -77,6 +92,7 @@ case object igblastAnnotation {
         )
         println(igblastnCmd.mkString(" "))
 
+        // Run the IgBLAST command
         val igblastnOutCode = igblastnCmd.!
         if(igblastnOutCode != 0)
           sys.error(s"igblastn could not execute correctly: ${igblastnOutCode}")
@@ -89,6 +105,7 @@ case object igblastAnnotation {
           ))
         }
 
+        // Get the Clonotype Summary
         val summariesOpts: Seq[Option[ClonotypeSummary]] =
           ClonotypeSummary.parseFromLines(igblastnOut.lines).toSeq
 
@@ -130,6 +147,9 @@ case object igblastAnnotation {
       )
     }
 
+    /**
+     * Define the output directory and call processImpl
+     */
     def process(context: ProcessingContext[Input]): AnyInstructions { type Out <: OutputFiles } = {
       val outputDir: File = context / "output"
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
