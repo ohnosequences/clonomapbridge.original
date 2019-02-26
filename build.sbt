@@ -1,4 +1,4 @@
-name          := "clonomap-bridge"
+name          := "clonomapbridge"
 organization  := "ohnosequences"
 description   := "A bridge between MIODx webapp and MIODx analysis pipeline"
 
