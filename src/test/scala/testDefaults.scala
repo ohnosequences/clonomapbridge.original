@@ -1,6 +1,6 @@
-package era7bio.asdfjkl.test
+package ohnosequences.clonomapbridge.test
 
-import era7bio.asdfjkl._
+import ohnosequences.clonomapbridge._
 import era7bio.repseqmiodx._
 import ohnosequences.loquat._
 import ohnosequences.statika._, aws._

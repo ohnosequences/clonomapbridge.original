@@ -1,6 +1,6 @@
-package ohnosequences.clonomap-bridge.loquats
+package ohnosequences.clonomapbridge.loquats
 
-import ohnosequences.clonomap-bridge._, data._, loquats._
+import ohnosequences.clonomapbridge._, data._, loquats._
 import era7bio.repseqmiodx._, umi._, io._
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.transfer._

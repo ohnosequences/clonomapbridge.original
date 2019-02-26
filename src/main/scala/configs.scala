@@ -1,4 +1,4 @@
-package era7bio.asdfjkl
+package ohnosequences.clonomapbridge
 
 import ohnosequences.loquat._
 import ohnosequences.statika._, aws._

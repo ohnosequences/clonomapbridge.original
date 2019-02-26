@@ -51,7 +51,7 @@ trait AnyPipeline { pipeline =>
   private def outputFor(
     sampleId: SampleID,
     stepConfig: AnyStepConfig
-    (d: AnyData): (AnyData, S3Resource) = {
+  )(d: AnyData): (AnyData, S3Resource) = {
     d -> S3Resource(
       outputS3Folder(sampleId, stepConfig.stepName) / s"${sampleId}_${d.label}"
     )

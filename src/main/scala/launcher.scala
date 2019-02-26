@@ -1,7 +1,7 @@
-package era7bio.asdfjkl
+package ohnosequences.clonomapbridge
 
 import ohnosequences.loquat._, utils._
-import era7bio.asdfjkl.loquats._
+import ohnosequences.clonomapbridge.loquats._
 import com.typesafe.scalalogging.LazyLogging
 import scala.util.{ Try, Failure }
 import scala.concurrent.duration._
