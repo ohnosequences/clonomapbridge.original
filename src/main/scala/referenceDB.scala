@@ -3,7 +3,7 @@ package ohnosequences.clonomapbridge
 import ohnosequences.statika._
 import ohnosequences.awstools._, s3._
 import java.io.File
-import era7bio.db._, tcr._
+import ohnosequences.db._, tcr._
 
 /**
  * Abstract bundle for downloading a reference database parametrized by its

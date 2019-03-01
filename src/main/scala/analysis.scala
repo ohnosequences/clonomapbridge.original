@@ -1,6 +1,6 @@
 package ohnosequences.clonomapbridge
 
-import era7bio.repseqmiodx._
+import ohnosequences.repseqmiodx._
 import ohnosequences.clonomapbridge._, loquats._, data._
 import ohnosequences.loquat._
 import ohnosequences.datasets._

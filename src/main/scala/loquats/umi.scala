@@ -1,7 +1,7 @@
 package ohnosequences.clonomapbridge.loquats
 
 import ohnosequences.clonomapbridge._, data._
-import era7bio.repseqmiodx._, umi._, io._
+import ohnosequences.repseqmiodx._, umi._, io._
 import ohnosequences.cosas._, types._, records._, klists._
 import ohnosequences.loquat._
 import ohnosequences.statika._

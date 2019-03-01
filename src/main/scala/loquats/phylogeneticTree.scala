@@ -1,7 +1,7 @@
 package ohnosequences.clonomapbridge.loquats
 
 import ohnosequences.clonomapbridge._, data._
-import era7bio.repseqmiodx, repseqmiodx._, umi._, io._, clonotypes._
+import ohnosequences.repseqmiodx, repseqmiodx._, umi._, io._, clonotypes._
 import ohnosequences.cosas._, types._, records._, klists._
 import ohnosequences.loquat._
 import ohnosequences.statika._
@@ -12,7 +12,7 @@ import ohnosequences.blast.api.parse.igblastn._
 import scala.util.matching.Regex
 import java.nio.file.Files
 import java.io.File
-import era7bio.db.tcr.GeneType
+import ohnosequences.db.tcr.GeneType
 import sys.process._
 import org.ddahl.rscala.RClient
 

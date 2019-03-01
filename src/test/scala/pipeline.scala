@@ -1,7 +1,7 @@
 package ohnosequences.clonomapbridge.test
 
 import ohnosequences.clonomapbridge._
-import era7bio.repseqmiodx._
+import ohnosequences.repseqmiodx._
 import ohnosequences.clonomapbridge.test.testDefaults._
 import ohnosequences.loquat._
 import ohnosequences.statika._, aws._
