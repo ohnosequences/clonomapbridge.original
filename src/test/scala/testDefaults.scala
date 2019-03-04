@@ -1,7 +1,7 @@
 package ohnosequences.clonomapbridge.test
 
 import ohnosequences.clonomapbridge._
-import era7bio.repseqmiodx._
+import ohnosequences.repseqmiodx._
 import ohnosequences.loquat._
 import ohnosequences.statika._, aws._
 import ohnosequences.awstools._, ec2._ , s3._, autoscaling._, regions._
