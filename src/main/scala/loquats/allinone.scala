@@ -11,6 +11,7 @@ import ohnosequences.statika._
 import ohnosequences.fastarious._, fastq._
 import ohnosequences.reads._, paired._
 import ohnosequences.datasets._
+import ohnosequences.db.tcr.{Chain, Species}
 import scala.util.matching.Regex
 import java.nio.file.Files
 import java.io.File
@@ -80,6 +81,31 @@ case object allInOne {
         new String( java.nio.file.Files readAllBytes file.toPath )
 
     /**
+     * Parse a string in the form "speciesID.chainName" and returns the
+     * corresponding Species and Chain.
+     *
+     * @param str is the string to be parsed
+     *
+     * @return an option defined with the Species and Chain from the string if
+     * it could be parsed and None otherwise.
+     */
+    def geneTypeFromString(str: String) : Option[(Species, Chain)] = {
+      // Any two non-empty strings without dots concatenated by a dot
+      val regex = "([^.]+)[.]([^.]+)".r
+
+      str match {
+        case regex(taxon, chainName) =>
+          for {
+            species <- Species.fromString(taxon)
+            chain <- Chain.fromString(chainName)
+          } yield {
+            (species, chain)
+          }
+        case _ => None
+      }
+    }
+
+    /**
      * This is what the machine will execute once this bundle starts to run
      */
     def process(context: ProcessingContext[Input]): AnyInstructions {
@@ -130,6 +156,11 @@ case object allInOne {
       val annOuts = igblastAnnotation.TRB.Outs(outputDir)
       val phyOuts = visualizations.dataProcessing.Outs(outputDir)
 
+      // Retrieve the specified reference DB
+      val filePath = context.inputFile(data.referenceDB).toPath
+      val referenceDBString = new String(Files.readAllBytes(filePath))
+      val referenceDB = geneTypeFromString(referenceDBString)
+
       // Run everything:
       //   1. UMI Analysis
       //   2. IgBLAST annotation
@@ -137,7 +168,7 @@ case object allInOne {
       // If everything worked as expected, link the output data to the
       // corresponding output files and Loquat would manage their upload
       umiAnalysis.dataProcessing.processImpl(r1File, r2File, umiOuts) -&-
-      igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, annOuts) -&-
+      igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, referenceDB, annOuts) -&-
       visualizations.dataProcessing.processImpl(
         annOuts(data.clonotype.igblastProductiveTSV),
         phyOuts
