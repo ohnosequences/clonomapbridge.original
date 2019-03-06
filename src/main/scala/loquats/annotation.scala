@@ -53,10 +53,13 @@ case object igblastAnnotation {
   */
   case object TRB extends DataProcessingBundle(
     bundles.igblast,
-    referenceDBs.human.TRB.V,
-    referenceDBs.human.TRB.D,
-    referenceDBs.human.TRB.J,
-    referenceDBs.human.TRB.aux
+    human.TRB.V,
+    human.TRB.D,
+    human.TRB.J,
+    human.TRB.aux,
+    human.TRA.V,
+    human.TRA.J,
+    human.TRA.aux
   )(inputData, outputData) {
 
     /**
