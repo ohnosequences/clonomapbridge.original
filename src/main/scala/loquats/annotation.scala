@@ -24,7 +24,8 @@ case object igblastAnnotation {
   // The input is just the consensus fasta from the umi step
   case object inputData extends DataSet(
     data.consensus.fasta :×:
-    data.referenceDB :×:
+    data.species :×:
+    data.chain :×:
     |[AnyData]
   )
 
@@ -102,9 +103,9 @@ case object igblastAnnotation {
             case Species.human =>
               chain match {
                 case Chain.TRA =>
-                  (human.TRB.V.name, human.TRB.D.name, human.TRB.J.name)
-                case Chain.TRA =>
                   (human.TRA.V.name, human.TRB.D.name, human.TRA.J.name)
+                case Chain.TRB =>
+                  (human.TRB.V.name, human.TRB.D.name, human.TRB.J.name)
               }
             case Species.mouse =>
               (
@@ -204,10 +205,18 @@ case object igblastAnnotation {
       val outputDir: File = context / "output"
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
 
-      val filePath = context.inputFile(data.referenceDB).toPath
-      val referenceDBString = new String(Files.readAllBytes(filePath))
+      // Retrieve the specified reference DB
+      val speciesFilePath = context.inputFile(data.species).toPath
+      val chainFilePath = context.inputFile(data.chain).toPath
+      val speciesString = new String(Files.readAllBytes(speciesFilePath))
+      val chainString = new String(Files.readAllBytes(chainFilePath))
       val referenceDB =
-        allInOne.dataProcessing.geneTypeFromString(referenceDBString)
+        for {
+          species <- Species.fromString(speciesString)
+          chain <- Chain.fromString(chainString)
+        } yield {
+          (species, chain)
+        }
 
       processImpl(
         context.inputFile(data.consensus.fasta),

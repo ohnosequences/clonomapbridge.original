@@ -72,9 +72,11 @@ case object data {
   /* ### Input
 
      - MIGs consensus sequences (output **5.1**)
-     - Reference database: {human,mouse}-TCR-{alpha,beta}
+     - Species reference database: {human,mouse}
+     - Chain reference database: {alpha,beta}
   */
-  case object referenceDB extends Data("db")
+  case object species extends Data("species")
+  case object chain extends Data("chain")
 
   /* ### Output */
   case object clonotype {

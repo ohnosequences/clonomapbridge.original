@@ -79,32 +79,6 @@ case object allInOne {
     def readFile: File => String =
       file =>
         new String( java.nio.file.Files readAllBytes file.toPath )
-
-    /**
-     * Parse a string in the form "speciesID.chainName" and returns the
-     * corresponding Species and Chain.
-     *
-     * @param str is the string to be parsed
-     *
-     * @return an option defined with the Species and Chain from the string if
-     * it could be parsed and None otherwise.
-     */
-    def geneTypeFromString(str: String) : Option[(Species, Chain)] = {
-      // Any two non-empty strings without dots concatenated by a dot
-      val regex = "([^.]+)[.]([^.]+)".r
-
-      str match {
-        case regex(taxon, chainName) =>
-          for {
-            species <- Species.fromString(taxon)
-            chain <- Chain.fromString(chainName)
-          } yield {
-            (species, chain)
-          }
-        case _ => None
-      }
-    }
-
     /**
      * This is what the machine will execute once this bundle starts to run
      */
@@ -157,9 +131,18 @@ case object allInOne {
       val phyOuts = visualizations.dataProcessing.Outs(outputDir)
 
       // Retrieve the specified reference DB
-      val filePath = context.inputFile(data.referenceDB).toPath
-      val referenceDBString = new String(Files.readAllBytes(filePath))
-      val referenceDB = geneTypeFromString(referenceDBString)
+      val speciesFilePath = context.inputFile(data.species).toPath
+      val chainFilePath = context.inputFile(data.chain).toPath
+      val speciesString = new String(Files.readAllBytes(speciesFilePath))
+      val chainString = new String(Files.readAllBytes(chainFilePath))
+      val referenceDB =
+        for {
+          species <- Species.fromString(speciesString)
+          chain <- Chain.fromString(chainString)
+        } yield {
+          (species, chain)
+        }
+
 
       // Run everything:
       //   1. UMI Analysis

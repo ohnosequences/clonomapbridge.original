@@ -26,7 +26,8 @@ case object umiAnalysis {
   case object inputData extends DataSet(
     data.r1 :×:
     data.r2 :×:
-    data.referenceDB :×:
+    data.species :×:
+    data.chain :×:
     |[AnyData]
   )
 

@@ -6,6 +6,7 @@ import ohnosequences.loquat._
 import ohnosequences.datasets._
 import ohnosequences.statika._, aws._
 import ohnosequences.awstools._, ec2._ , s3._, autoscaling._, regions._
+import ohnosequences.db.tcr.{Species, Chain}
 import com.amazonaws.auth.profile._
 import com.amazonaws.auth._
 import scala.concurrent.duration._
@@ -15,7 +16,9 @@ import java.net.URL
 // Common case class for the input data
 case class InputData(
   r1 : S3Object,
-  r2 : S3Object
+  r2 : S3Object,
+  species: Species,
+  chain: Chain
 )
 
 // Common case class for the output data, which is parametrized by a base
@@ -151,7 +154,9 @@ case object analysis {
           remoteInput =
             Map(
               data.r1 -> MessageResource(input.r1.toString),
-              data.r2 -> MessageResource(input.r2.toString)
+              data.r2 -> MessageResource(input.r2.toString),
+              species -> MessageResource(input.species.toString),
+              chain   -> MessageResource(input.chain.toString)
             )
           ,
           remoteOutput = output.remoteOutput()
