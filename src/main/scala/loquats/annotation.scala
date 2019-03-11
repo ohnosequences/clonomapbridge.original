@@ -16,6 +16,8 @@ import java.io.File
 import ohnosequences.db.tcr.{Chain, Species}
 import sys.process._
 import ohnosequences.clonomapbridge.bundles.referenceDBs.human
+import com.typesafe.scalalogging.LazyLogging
+
 /** == Annotation Loquat ==
 
 */
@@ -61,7 +63,7 @@ case object igblastAnnotation {
     human.TRA.V,
     human.TRA.J,
     human.TRA.aux
-  )(inputData, outputData) {
+  )(inputData, outputData) with LazyLogging {
 
     /**
      * Dummy instructions, the fun happens in processImpl
@@ -115,6 +117,11 @@ case object igblastAnnotation {
               )
           }
 
+        logger.debug(s"Using $species-$chain databases:")
+        logger.debug(s"    => V: $dbVFile")
+        logger.debug(s"    => D: $dbDFile")
+        logger.debug(s"    => J: $dbJFile")
+
         val auxFile = species match {
           case Species.human =>
             chain match {
@@ -125,6 +132,8 @@ case object igblastAnnotation {
           case Species.mouse =>
             new File(bundles.igblast.folder, "optional_file/mouse_gl.aux")
         }
+
+        logger.debug(s"    => Aux file: $auxFile")
 
         // Define the output for IgBLAST
         val igblastnOut = output(data.clonotype.igblastOut)
@@ -141,7 +150,7 @@ case object igblastAnnotation {
           igblastOrganism = organism
         )
 
-        println(igblastnCmd.mkString(" "))
+        logger.debug(igblastnCmd.mkString(" "))
 
         // Run the IgBLAST command
         val igblastnOutCode = igblastnCmd.!
