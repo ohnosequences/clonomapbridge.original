@@ -117,10 +117,10 @@ case object igblastAnnotation {
               )
           }
 
-        logger.debug(s"Using $species-$chain databases:")
-        logger.debug(s"    => V: $dbVFile")
-        logger.debug(s"    => D: $dbDFile")
-        logger.debug(s"    => J: $dbJFile")
+        logger.info(s"Using $species-$chain databases:")
+        logger.info(s"    => V: $dbVFile")
+        logger.info(s"    => D: $dbDFile")
+        logger.info(s"    => J: $dbJFile")
 
         val auxFile = species match {
           case Species.human =>
@@ -133,7 +133,7 @@ case object igblastAnnotation {
             new File(bundles.igblast.folder, "optional_file/mouse_gl.aux")
         }
 
-        logger.debug(s"    => Aux file: $auxFile")
+        logger.info(s"    => Aux file: $auxFile")
 
         // Define the output for IgBLAST
         val igblastnOut = output(data.clonotype.igblastOut)
