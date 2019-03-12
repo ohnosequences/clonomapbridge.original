@@ -26,6 +26,8 @@ case object umiAnalysis {
   case object inputData extends DataSet(
     data.r1 :×:
     data.r2 :×:
+    data.species :×:
+    data.chain :×:
     |[AnyData]
   )
 
@@ -79,7 +81,7 @@ case object umiAnalysis {
         // Generate and write the consensuses
         val consensuses: Array[UMIConsensus] =
           ReadsProcessing.writeConsensuses(
-            format         = DefaultFormats.typeA,
+            formats        = DefaultFormats.typeA,
             reads          = readPairs,
             expectedLength = 330,
             debug          = true

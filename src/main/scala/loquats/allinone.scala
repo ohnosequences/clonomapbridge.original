@@ -11,6 +11,7 @@ import ohnosequences.statika._
 import ohnosequences.fastarious._, fastq._
 import ohnosequences.reads._, paired._
 import ohnosequences.datasets._
+import ohnosequences.db.tcr.{Chain, Species}
 import scala.util.matching.Regex
 import java.nio.file.Files
 import java.io.File
@@ -78,7 +79,6 @@ case object allInOne {
     def readFile: File => String =
       file =>
         new String( java.nio.file.Files readAllBytes file.toPath )
-
     /**
      * This is what the machine will execute once this bundle starts to run
      */
@@ -130,6 +130,20 @@ case object allInOne {
       val annOuts = igblastAnnotation.TRB.Outs(outputDir)
       val phyOuts = visualizations.dataProcessing.Outs(outputDir)
 
+      // Retrieve the specified reference DB
+      val speciesFilePath = context.inputFile(data.species).toPath
+      val chainFilePath = context.inputFile(data.chain).toPath
+      val speciesString = new String(Files.readAllBytes(speciesFilePath))
+      val chainString = new String(Files.readAllBytes(chainFilePath))
+      val referenceDB =
+        for {
+          species <- Species.fromString(speciesString)
+          chain <- Chain.fromString(chainString)
+        } yield {
+          (species, chain)
+        }
+
+
       // Run everything:
       //   1. UMI Analysis
       //   2. IgBLAST annotation
@@ -137,7 +151,7 @@ case object allInOne {
       // If everything worked as expected, link the output data to the
       // corresponding output files and Loquat would manage their upload
       umiAnalysis.dataProcessing.processImpl(r1File, r2File, umiOuts) -&-
-      igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, annOuts) -&-
+      igblastAnnotation.TRB.processImpl(umiOuts.consensus.fasta, referenceDB, annOuts) -&-
       visualizations.dataProcessing.processImpl(
         annOuts(data.clonotype.igblastProductiveTSV),
         phyOuts

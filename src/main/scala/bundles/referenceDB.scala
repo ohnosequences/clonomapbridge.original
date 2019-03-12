@@ -1,4 +1,4 @@
-package ohnosequences.clonomapbridge
+package ohnosequences.clonomapbridge.bundles
 
 import ohnosequences.statika._
 import ohnosequences.awstools._, s3._

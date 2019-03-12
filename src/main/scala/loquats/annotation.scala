@@ -9,11 +9,14 @@ import ohnosequences.fastarious._, fasta._
 import ohnosequences.reads._, paired._
 import ohnosequences.datasets._
 import ohnosequences.blast.api.parse.igblastn._
+import ohnosequences.blast.api.IgBLASTOrganism
 import scala.util.matching.Regex
 import java.nio.file.Files
 import java.io.File
-import ohnosequences.db.tcr.GeneType
+import ohnosequences.db.tcr.{Chain, Species}
 import sys.process._
+import ohnosequences.clonomapbridge.bundles.referenceDBs.human
+import com.typesafe.scalalogging.LazyLogging
 
 /** == Annotation Loquat ==
 
@@ -23,6 +26,8 @@ case object igblastAnnotation {
   // The input is just the consensus fasta from the umi step
   case object inputData extends DataSet(
     data.consensus.fasta :×:
+    data.species :×:
+    data.chain :×:
     |[AnyData]
   )
 
@@ -51,11 +56,14 @@ case object igblastAnnotation {
   */
   case object TRB extends DataProcessingBundle(
     bundles.igblast,
-    referenceDBs.human.TRB.V,
-    referenceDBs.human.TRB.D,
-    referenceDBs.human.TRB.J,
-    referenceDBs.human.TRB.aux
-  )(inputData, outputData) {
+    human.TRB.V,
+    human.TRB.D,
+    human.TRB.J,
+    human.TRB.aux,
+    human.TRA.V,
+    human.TRA.J,
+    human.TRA.aux
+  )(inputData, outputData) with LazyLogging {
 
     /**
      * Dummy instructions, the fun happens in processImpl
@@ -74,23 +82,75 @@ case object igblastAnnotation {
      * Implementation of the process itself. Loquat will call the process
      * functions below
      */
-    def processImpl(consensusFile: File, output: Outs): AnyInstructions {
+    def processImpl(
+      consensusFile: File,
+      geneType: Option[(Species, Chain)],
+      output: Outs
+    ): AnyInstructions {
       type Out <: OutputFiles
     } = {
       LazyTry {
+        // Get the species and chain from the optional geneType.
+        // Yes, I know, I am using .get on an Option, but we *do* want to fail
+        // if it is not defined. And we are protected by the wrapping LazyTry
+        val (species, chain) = geneType.get
+
+        val organism = species match {
+          case Species.human => IgBLASTOrganism.human
+          case Species.mouse => IgBLASTOrganism.mouse
+        }
+
+        val (dbVFile, dbDFile, dbJFile) =
+          species match {
+            case Species.human =>
+              chain match {
+                case Chain.TRA =>
+                  (human.TRA.V.name, human.TRB.D.name, human.TRA.J.name)
+                case Chain.TRB =>
+                  (human.TRB.V.name, human.TRB.D.name, human.TRB.J.name)
+              }
+            case Species.mouse =>
+              (
+                new File(bundles.igblast.folder, "database/mouse_gl_V"),
+                new File(bundles.igblast.folder, "database/mouse_gl_D"),
+                new File(bundles.igblast.folder, "database/mouse_gl_J")
+              )
+          }
+
+        logger.info(s"Using $species-$chain databases:")
+        logger.info(s"    => V: $dbVFile")
+        logger.info(s"    => D: $dbDFile")
+        logger.info(s"    => J: $dbJFile")
+
+        val auxFile = species match {
+          case Species.human =>
+            chain match {
+              case Chain.TRA => human.TRA.aux.file
+              case Chain.TRB => human.TRB.aux.file
+            }
+
+          case Species.mouse =>
+            new File(bundles.igblast.folder, "optional_file/mouse_gl.aux")
+        }
+
+        logger.info(s"    => Aux file: $auxFile")
+
         // Define the output for IgBLAST
         val igblastnOut = output(data.clonotype.igblastOut)
 
         // Define the IgBLAST command with the needed parameters
         val igblastnCmd = annotation.clonotypesCmd(
           queryFile = consensusFile,
-          dbVFile = referenceDBs.human.TRB.V.name,
-          dbDFile = referenceDBs.human.TRB.D.name,
-          dbJFile = referenceDBs.human.TRB.J.name,
-          auxFile = referenceDBs.human.TRB.aux.file,
-          output  = igblastnOut
+          dbVFile = dbVFile,
+          dbDFile = dbDFile,
+          dbJFile = dbJFile,
+          auxFile = auxFile,
+          chain   = chain,
+          output  = igblastnOut,
+          igblastOrganism = organism
         )
-        println(igblastnCmd.mkString(" "))
+
+        logger.debug(igblastnCmd.mkString(" "))
 
         // Run the IgBLAST command
         val igblastnOutCode = igblastnCmd.!
@@ -154,8 +214,22 @@ case object igblastAnnotation {
       val outputDir: File = context / "output"
       if (!outputDir.exists) Files.createDirectories(outputDir.toPath)
 
+      // Retrieve the specified reference DB
+      val speciesFilePath = context.inputFile(data.species).toPath
+      val chainFilePath = context.inputFile(data.chain).toPath
+      val speciesString = new String(Files.readAllBytes(speciesFilePath))
+      val chainString = new String(Files.readAllBytes(chainFilePath))
+      val referenceDB =
+        for {
+          species <- Species.fromString(speciesString)
+          chain <- Chain.fromString(chainString)
+        } yield {
+          (species, chain)
+        }
+
       processImpl(
         context.inputFile(data.consensus.fasta),
+        referenceDB,
         Outs(outputDir)
       )
     }

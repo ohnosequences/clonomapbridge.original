@@ -1,0 +1,6 @@
+- Move the referenceDB bundle to bundles/ dir
+- Add a referenceDB input in data
+- Tune igblastn command depending on specified reference database
+- Add dependency on human beta bundle
+- Add Species and Chain to bundle input
+- Add info logging to reference database creation
